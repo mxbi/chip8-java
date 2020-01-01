@@ -37,6 +37,29 @@ public class CPU {
 			ram[progload] = b;
 			progload++;
 		}
+
+		short[] charmap = {
+				0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+				0x20, 0x60, 0x20, 0x20, 0x70, // 1
+				0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+				0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+				0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+				0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+				0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+				0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+				0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+				0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+				0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+				0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+				0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+				0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+				0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+				0xF0, 0x80, 0xF0, 0x80, 0x80  // F
+		};
+
+		for (int i=0; i<charmap.length; i++) {
+			ram[i] = charmap[i];
+		}
 	}
 
 	public void run() throws InterruptedException {
@@ -74,7 +97,7 @@ public class CPU {
 
 
 	public static String instrToString(int instr) {
-		return Integer.toHexString(instr & 0xFFFF);
+		return String.format("0x%04X", instr);
 	}
 
 	public static int getn(int instr) {
@@ -110,10 +133,10 @@ public class CPU {
 				case 0x00E0: op_00E0(instr); break;
 				case 0x00EE: op_00EE(instr); break;
 				default:
-					System.out.println("0x0nnn instruction intentionally ignored: 0x" + instrToString(instr));
+					System.out.println("0x0nnn instruction intentionally ignored: " + instrToString(instr));
 					next();
 					break;
-			}
+			}; break;
 			case 0x1: op_1nnn(instr); break;
 			case 0x2: op_2nnn(instr); break;
 			case 0x3: op_3xkk(instr); break;
@@ -132,7 +155,7 @@ public class CPU {
 				case 0x7: op_8xy7(instr); break;
 				case 0xE: op_8xyE(instr); break;
 				default: throw new UnsupportedOperationException("Unexpected arithmetic instruction " + instrToString(instr));
-			}
+			}; break;
 			case 0x9: op_9xy0(instr); break;
 			case 0xA: op_Annn(instr); break;
 			case 0xB: op_Bnnn(instr); break;
@@ -143,7 +166,7 @@ public class CPU {
 				case 0xA1: op_ExA1(instr); break;
 				case 0x7F:
 				default: throw new UnsupportedOperationException("Unexpected skip instruction " + instrToString(instr));
-			}
+			}; break;
 			case 0xF: switch (getk(instr)) {
 				case 0x07: op_Fx07(instr); break;
 				case 0x0A: op_Fx0A(instr); break;
@@ -155,12 +178,12 @@ public class CPU {
 				case 0x55: op_Fx55(instr); break;
 				case 0x65: op_Fx65(instr); break;
 				default: throw new UnsupportedOperationException("Unexpected instruction " + instrToString(instr));
-			}
+			}; break;
 			default: throw new UnsupportedOperationException("Unexpected instruction " + instrToString(instr));
 		}
 
 		if (oldPC == PC) {
-			System.out.println("Issue with 0x" + instrToString(instr) + ": PC stuck");
+			System.out.println("Issue with " + instrToString(instr) + ": PC stuck");
 		}
 	}
 
@@ -259,6 +282,7 @@ public class CPU {
 		int sum = V[getx(instr)] + V[gety(instr)];
 		V[0xF] = (short) ((sum > 0xFF) ? 1 : 0);
 		V[getx(instr)] = (short)(sum % 0xFF);
+		next();
 	}
 
 	// V[x] <- V[x] - V[y], set V[F] = NOT borrow
@@ -411,7 +435,8 @@ public class CPU {
 
 	// Set I to location of character in V[x]
 	private void op_Fx29(int instr) {
-		throw new UnsupportedOperationException("Character sprites not supported");
+		I = (short) (4*getx(instr));
+		next();
 	}
 
 	// Store BCD representation of V[x] at I, I+1, I+2
@@ -432,6 +457,7 @@ public class CPU {
 		for (int i=0; i <= getx(instr); i++) {
 			ram[I+i] = V[i];
 		}
+		next();
 	}
 
 	// Load contents into V[:x] starting at ram[I]
@@ -439,5 +465,6 @@ public class CPU {
 		for (int i=0; i <= getx(instr); i++) {
 			V[i] = ram[I+i];
 		}
+		next();
 	}
 }
