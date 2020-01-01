@@ -3,7 +3,7 @@ package com.mxbi.chip8;
 import java.util.Arrays;
 
 public class CPU {
-	public static final int cpu_freq = 512;
+	public static final int cpu_freq = 5;
 
 	// Initialise memory and registers
 	// We unfortunately have to wasteful and use short instead of byte here to allow for up to 0xFF representation
@@ -21,20 +21,57 @@ public class CPU {
 	private byte SP = 0x0;
 
 	// 32x64 monochrome display
-	private DisplayInterface display = new Display();
+	private DisplayInterface display;
 	private KeyboardInterface keyboard;
 
 	// Timers
 	private DelayTimer delay = new DelayTimer();
 	private SoundTimer sound = new SoundTimer();
 
-	CPU(short[] program) {
+	CPU(short[] program, DisplayInterface display, KeyboardInterface keyboard) {
+		this.display = display;
+		this.keyboard = keyboard;
+
 		int progload = 0x200; // Pointer to load the program at
 		for (short b : program) {
 			ram[progload] = b;
 			progload++;
 		}
 	}
+
+	public void run() throws InterruptedException {
+		long cycleWaitNanos = (long) (1e9 / cpu_freq);
+
+		long t0 = System.nanoTime();
+		while (true) {
+			delay.check();
+			sound.check();
+			display.check();
+
+			execute();
+
+			// Timing: Wait for next clock cycle
+			long t1 = System.nanoTime();
+
+			long waitTime = cycleWaitNanos - (t1 - t0);
+
+			// Sleep until we have 500 microseconds left, then switch to busywait for better precision
+			// Windows has crappy timers so we need this hack
+			int sleepTime = (int) (waitTime - 500000);
+			if (sleepTime > 0) {
+				Thread.sleep(sleepTime / 1000000, sleepTime % 1000000);
+			}
+
+			// Busy wait until we reach next clock cycle
+			while ((t1 - t0) < cycleWaitNanos) {
+				t1 = System.nanoTime();
+			}
+
+			System.out.println(t1 - t0);
+			t0 = System.nanoTime();
+		}
+	}
+
 
 	public static String instrToString(int instr) {
 		return Integer.toHexString(instr & 0xFFFF);
@@ -64,12 +101,18 @@ public class CPU {
 	void execute() throws UnsupportedOperationException {
 		// Fetch instruction (2 bytes) from ram
 		int instr = (((int) ram[PC]) << 8) + ((int) ram[PC + 1]);
+		System.out.println(instrToString(instr));
+
+		int oldPC = PC;
 
 		switch ((instr & 0xF000) >>> 12) {
 			case 0x0: switch (instr) {
 				case 0x00E0: op_00E0(instr); break;
 				case 0x00EE: op_00EE(instr); break;
-				default: throw new UnsupportedOperationException("0x0nnn instruction intentionally not implemented" + instrToString(instr));
+				default:
+					System.out.println("0x0nnn instruction intentionally ignored: 0x" + instrToString(instr));
+					next();
+					break;
 			}
 			case 0x1: op_1nnn(instr); break;
 			case 0x2: op_2nnn(instr); break;
@@ -115,6 +158,10 @@ public class CPU {
 			}
 			default: throw new UnsupportedOperationException("Unexpected instruction " + instrToString(instr));
 		}
+
+		if (oldPC == PC) {
+			System.out.println("Issue with 0x" + instrToString(instr) + ": PC stuck");
+		}
 	}
 
 	// INSTRUCTIONS
@@ -137,7 +184,7 @@ public class CPU {
 
 	// Unconditional jump
 	private void op_1nnn(int instr) {
-		PC = (short)getn(instr);
+		PC = (short) getn(instr);
 	}
 
 	// Call subroutine
@@ -282,6 +329,7 @@ public class CPU {
 	// I <- NNN
 	private void op_Annn(int instr) {
 		I = (short) getn(instr);
+		next();
 	}
 
 	// Jump to NNN+V[0]
@@ -322,7 +370,7 @@ public class CPU {
 
 	// Set V[x] to the time left on the delay timer
  	private void op_Fx07(int instr) {
-		V[getx(instr)] = delay.getTimer();
+		V[getx(instr)] = (short) delay.getTimer();
 		next();
 	}
 

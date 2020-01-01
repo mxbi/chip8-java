@@ -4,13 +4,11 @@ import java.io.IOException;
 
 public class Main {
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
 	   short[] rom = ROMLoader.loadRomFromFile("test_opcode.ch8");
-	   System.out.println(CPU.instrToString(rom[0]));
 
-	   CPU cpu = new CPU(rom);
-	   cpu.execute();
-	   cpu.execute();
-	   cpu.execute();
+	   Display display = new Display();
+	   CPU cpu = new CPU(rom, display, display);
+	   cpu.run();
     }
 }

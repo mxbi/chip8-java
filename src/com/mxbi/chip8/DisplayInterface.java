@@ -5,4 +5,6 @@ public interface DisplayInterface {
 
     // Draw should return true if any bits are _unset_ by the sprite, and false otherwise
     boolean draw(short[] data, int x, int y);
+
+    void check();
 }

@@ -5,4 +5,5 @@ public class Timer {
     int getTimer() {
         return 0;
     }
+    void check() {}
 }
