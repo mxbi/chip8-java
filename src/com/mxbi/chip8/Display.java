@@ -20,7 +20,7 @@ public class Display implements DisplayInterface, KeyboardInterface {
 
         for (int y=0; y<data.length; y++) {
             for (int x = 0; x < 8; x++) {
-                boolean bit = getBit(data[y], x);
+                boolean bit = getBit(data[y], 7 - x);
                 int xco = (x0 + x) % 64;
                 int yco = (y0 + y) % 32;
                 if (bit) {
@@ -39,7 +39,7 @@ public class Display implements DisplayInterface, KeyboardInterface {
     private void output() {
         for (int y=0; y<32; y++) {
             for (int x=0; x<64; x++) {
-                System.out.print(disp[x][y] ? '#' : ' ');
+                System.out.print(disp[x][y] ? '█' : ' ');
             }
             System.out.println();
         }
@@ -53,7 +53,7 @@ public class Display implements DisplayInterface, KeyboardInterface {
 
     @Override
     public boolean isPressed(int key) {
-        System.out.println("KEY ispressed? checked");
+        System.out.println("KEY ispressed? checked " + key);
         return false;
     }
 

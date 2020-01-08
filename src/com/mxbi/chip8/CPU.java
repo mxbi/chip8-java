@@ -3,7 +3,7 @@ package com.mxbi.chip8;
 import java.util.Arrays;
 
 public class CPU {
-	public static final int cpu_freq = 5;
+	public static final int cpu_freq = 8;
 
 	// Initialise memory and registers
 	// We unfortunately have to wasteful and use short instead of byte here to allow for up to 0xFF representation
@@ -90,7 +90,7 @@ public class CPU {
 				t1 = System.nanoTime();
 			}
 
-			System.out.println(t1 - t0);
+//			System.out.println(t1 - t0);
 			t0 = System.nanoTime();
 		}
 	}
@@ -250,6 +250,7 @@ public class CPU {
 	// V[x] += kk
 	private void op_7xkk(int instr) {
 		V[getx(instr)] += getk(instr);
+		V[getx(instr)] %= 0x100;
 		next();
 	}
 
@@ -281,7 +282,7 @@ public class CPU {
 	private void op_8xy4(int instr) {
 		int sum = V[getx(instr)] + V[gety(instr)];
 		V[0xF] = (short) ((sum > 0xFF) ? 1 : 0);
-		V[getx(instr)] = (short)(sum % 0xFF);
+		V[getx(instr)] = (short)(sum % 0x100);
 		next();
 	}
 
@@ -372,7 +373,7 @@ public class CPU {
 	private void op_Dxyn(int instr) {
 		int N = instr & 0x000F;
 		// We'll worry about it later
-		display.draw(Arrays.copyOf(ram, N), getx(instr), gety(instr));
+		V[0xF] = (short) (display.draw(Arrays.copyOfRange(ram, I, I+N), V[getx(instr)], V[gety(instr)]) ? 1 : 0);
 		next();
 	}
 
@@ -418,13 +419,14 @@ public class CPU {
 	// Set sound timer to V[x]
 	private void op_Fx18(int instr) {
 		sound.setTimer(V[getx(instr)]);
+		next();
 	}
 
 	// I += V[x]. V[F] = 1 if result overflows 0xFFF
 	private void op_Fx1E(int instr) {
 		 I += V[getx(instr)];
 		 if (I > 0xFFF) {
-		 	I %= 0xFFF;
+		 	I %= 0x1000;
 		 	V[0xF] = 1;
 		 } else {
 		 	V[0xF] = 0;
@@ -435,7 +437,7 @@ public class CPU {
 
 	// Set I to location of character in V[x]
 	private void op_Fx29(int instr) {
-		I = (short) (4*getx(instr));
+		I = (short) (5*V[getx(instr)]);
 		next();
 	}
 
