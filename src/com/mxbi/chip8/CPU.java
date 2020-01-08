@@ -323,7 +323,7 @@ public class CPU {
 			V[0xF] = 0;
 			V[x] = (short) (0x100 + V[y] - V[x]);
 		} else {
-			V[0xF] = 0;
+			V[0xF] = 1;
 			V[x] = (short) (V[y] - V[x]);
 		}
 
@@ -337,7 +337,7 @@ public class CPU {
 	// V[x] <<=1, V[F] = MSB
 	private void op_8xyE(int instr) {
 		int x = getx(instr);
-		V[0xF] = (short) (V[x] & 0b10000000);
+		V[0xF] = (short) ((V[x] >> 7)); //((V[x] & 0b10000000));
 		V[x] = (short) ((V[x] << 1) & 0xFF);
 
 		next();
