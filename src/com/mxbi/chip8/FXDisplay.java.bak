@@ -1,0 +1,86 @@
+package com.mxbi.chip8;
+
+import javafx.application.Application;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.layout.Border;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.StackPane;
+import javafx.stage.Stage;
+
+public class FXDisplay extends Application implements DisplayInterface, KeyboardInterface {
+    boolean[][] disp = new boolean[64][32];
+
+    @Override
+    public void start(Stage primaryStage) {
+	    BorderPane root = new BorderPane();
+	    Scene scene = new Scene(root, 400, 400);
+	    primaryStage.setScene(scene);
+	    primaryStage.show();
+    }
+
+    public FXDisplay() {
+    }
+
+    public void clear() {
+        disp = new boolean[64][32];
+    }
+
+    private boolean getBit(short num, int bit) {
+        return ((num >> bit) & 1) == 1;
+    }
+
+    public boolean draw(short[] data, int x0, int y0) {
+        boolean flipped = false;
+
+        for (int y=0; y<data.length; y++) {
+            for (int x = 0; x < 8; x++) {
+                boolean bit = getBit(data[y], 7 - x);
+                int xco = (x0 + x) % 64;
+                int yco = (y0 + y) % 32;
+                if (bit) {
+                    if (disp[xco][yco]) {
+                        disp[xco][yco] = false;
+                        flipped = true;
+                    } else {
+                        disp[xco][yco] = true;
+                    }
+                }
+            }
+        }
+        return flipped;
+    }
+
+    private void output() {
+        for (int y=0; y<32; y++) {
+            for (int x=0; x<64; x++) {
+                System.out.print(disp[x][y] ? '█' : ' ');
+            }
+            System.out.println();
+        }
+    }
+
+    @Override
+    public void check() {
+        // Draw on every cycle for now
+        output();
+    }
+
+    @Override
+    public boolean isPressed(int key) {
+        System.out.println("KEY ispressed? checked " + key);
+        return false;
+    }
+
+    @Override
+    public int waitForAnyKey() {
+        System.out.println("waited for any key!");
+        return 0;
+    }
+
+	public static void main(String[] args) {
+		launch(args);
+	}
+}

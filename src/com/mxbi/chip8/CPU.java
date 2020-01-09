@@ -3,7 +3,7 @@ package com.mxbi.chip8;
 import java.util.Arrays;
 
 public class CPU {
-	public static final int cpu_freq = 8;
+	public static final int cpu_freq = 512;
 
 	// Initialise memory and registers
 	// We unfortunately have to wasteful and use short instead of byte here to allow for up to 0xFF representation

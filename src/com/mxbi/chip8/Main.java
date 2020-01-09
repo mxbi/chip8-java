@@ -1,13 +1,14 @@
 package com.mxbi.chip8;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 
 public class Main {
 
-    public static void main(String[] args) throws IOException, InterruptedException {
-	   short[] rom = ROMLoader.loadRomFromFile("BC_test.ch8");
+    public static void main(String[] args) throws IOException, InterruptedException, InvocationTargetException {
+	   short[] rom = ROMLoader.loadRomFromFile("pong.ch8");
 
-	   Display display = new Display();
+	   SwingDisplay display = new SwingDisplay();
 	   CPU cpu = new CPU(rom, display, display);
 	   cpu.run();
     }

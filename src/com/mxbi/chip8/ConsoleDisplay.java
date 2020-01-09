@@ -1,9 +1,9 @@
 package com.mxbi.chip8;
 
-public class Display implements DisplayInterface, KeyboardInterface {
+public class ConsoleDisplay implements DisplayInterface, KeyboardInterface {
     boolean[][] disp = new boolean[64][32];
 
-    public Display() {
+    public ConsoleDisplay() {
 
     }
 
