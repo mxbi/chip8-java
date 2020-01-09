@@ -380,7 +380,7 @@ public class CPU {
 
 	// Skip next instruction if key stored in V[x] is pressed
 	private void op_Ex9E(int instr) {
-		if (keyboard.isPressed(getx(instr))) {
+		if (keyboard.isPressed(V[getx(instr)])) {
 			next();
 		}
 		next();
@@ -388,7 +388,7 @@ public class CPU {
 
 	// Skip next instruction if key stored in V[x] is NOT pressed
 	private void op_ExA1(int instr) {
-		if (!keyboard.isPressed(gety(instr))) {
+		if (!keyboard.isPressed(V[getx(instr)])) {
 			next();
 		}
 		next();

@@ -17,14 +17,12 @@ class KeyboardChecker extends KeyAdapter {
     @Override
     public void keyPressed(KeyEvent event) {
         char ch = event.getKeyChar();
-        System.out.println("event = " + event);
         keysPressed.add(ch);
     }
 
     @Override
     public void keyReleased(KeyEvent event) {
         char ch = event.getKeyChar();
-        System.out.println("event = " + event);
         keysPressed.remove(ch);
     }
 
