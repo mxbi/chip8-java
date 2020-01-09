@@ -92,7 +92,6 @@ public class CPU {
 				t0 = System.nanoTime();
 			}
 
-//			t0 = System.nanoTime();
 			nextClockTime += minClockWaitTime;
 		}
 	}
@@ -404,7 +403,7 @@ public class CPU {
 	// Wait until key is pressed, and put that key in V[x]
 	private void op_Fx0A(int instr) {
 		int key = keyboard.waitForAnyKey();
-		if (key > 0xFF) {
+		if (key > 0xF) {
 			throw new IllegalStateException("0xFx0A: Key" + key + "pressed out of range");
 		}
 		V[getx(instr)] = (short) key;

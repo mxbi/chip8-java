@@ -2,15 +2,46 @@ package com.mxbi.chip8;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashSet;
+
+import static java.awt.event.KeyEvent.KEY_PRESSED;
+import static java.awt.event.KeyEvent.KEY_RELEASED;
+
+class KeyboardChecker extends KeyAdapter {
+    private HashSet<Character> keysPressed = new HashSet<>();
+
+    @Override
+    public void keyPressed(KeyEvent event) {
+        char ch = event.getKeyChar();
+        System.out.println("event = " + event);
+        keysPressed.add(ch);
+    }
+
+    @Override
+    public void keyReleased(KeyEvent event) {
+        char ch = event.getKeyChar();
+        System.out.println("event = " + event);
+        keysPressed.remove(ch);
+    }
+
+    public boolean isPressed(char key) {
+        return keysPressed.contains(key);
+    }
+}
 
 public class SwingDisplay implements DisplayInterface, KeyboardInterface {
     private boolean[][] disp = new boolean[64][32];
+    public static final char[] keypad = {'x', '1', '2', '3', 'q', 'w', 'e', 'a', 's', 'd', 'z', 'c', '4', 'r', 'f', 'v'};
 
     private JFrame frame;
     private JLabel label;
     private ImageIcon imageIcon;
+
+    private KeyboardChecker keyboardChecker = new KeyboardChecker();
 
     public static final int frameRate = 60;
     private static final long minFrameTimeNanos = (long) (1e9 / frameRate); // 60 fps
@@ -31,14 +62,16 @@ public class SwingDisplay implements DisplayInterface, KeyboardInterface {
         label = new JLabel(imageIcon);
 
         drawNewFrame();
-        
+
+        frame.addKeyListener(keyboardChecker);
+
         frame.getContentPane().add(label);
         frame.pack();
         frame.setVisible(true);
 
     }
 
-    public SwingDisplay() throws InvocationTargetException, InterruptedException {
+    SwingDisplay() throws InvocationTargetException, InterruptedException {
         SwingUtilities.invokeAndWait(this::createGUI);
     }
 
@@ -116,9 +149,6 @@ public class SwingDisplay implements DisplayInterface, KeyboardInterface {
 
         // We increment it by 16ms instead of just adding 16ms onto the current time
         // This means that each frame compensates for the delay of the last frame, giving more accurate timing
-//        if (nextFrameTime == null) {
-//            nextFrameTime = nanoTime - 1;
-//        }
         if (nanoTime > nextFrameTime) {
             drawNewFrame();
         }
@@ -126,13 +156,20 @@ public class SwingDisplay implements DisplayInterface, KeyboardInterface {
 
     @Override
     public boolean isPressed(int key) {
-        System.out.println("KEY ispressed? checked " + key);
-        return false;
+        System.out.println("KEY ispressed? checked " + key + keypad[key] + ' ' + keyboardChecker.isPressed(keypad[key]));
+        return keyboardChecker.isPressed(keypad[key]);
     }
 
     @Override
     public int waitForAnyKey() {
-        System.out.println("waited for any key!");
-        return 0;
+        while (true) {
+            for (int i=0; i<=0xF; i++) {
+                if (keyboardChecker.isPressed(keypad[i])) {
+                    return i;
+                }
+            }
+
+            frame.setTitle("CHIP-8: Waiting for key!");
+        }
     }
 }
