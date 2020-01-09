@@ -2,35 +2,9 @@ package com.mxbi.chip8;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
-import java.util.HashSet;
-
-import static java.awt.event.KeyEvent.KEY_PRESSED;
-import static java.awt.event.KeyEvent.KEY_RELEASED;
-
-class KeyboardChecker extends KeyAdapter {
-    private HashSet<Character> keysPressed = new HashSet<>();
-
-    @Override
-    public void keyPressed(KeyEvent event) {
-        char ch = event.getKeyChar();
-        keysPressed.add(ch);
-    }
-
-    @Override
-    public void keyReleased(KeyEvent event) {
-        char ch = event.getKeyChar();
-        keysPressed.remove(ch);
-    }
-
-    public boolean isPressed(char key) {
-        return keysPressed.contains(key);
-    }
-}
 
 public class SwingDisplay implements DisplayInterface, KeyboardInterface {
     private boolean[][] disp = new boolean[64][32];
@@ -41,7 +15,7 @@ public class SwingDisplay implements DisplayInterface, KeyboardInterface {
     private JLabel label;
     private ImageIcon imageIcon;
 
-    private KeyboardChecker keyboardChecker = new KeyboardChecker();
+    private SwingKeyboardListener keyboardListener = new SwingKeyboardListener();
 
     public static final int frameRate = 60;
     private static final long minFrameTimeNanos = (long) (1e9 / frameRate); // 60 fps
@@ -63,7 +37,7 @@ public class SwingDisplay implements DisplayInterface, KeyboardInterface {
 
         drawNewFrame();
 
-        frame.addKeyListener(keyboardChecker);
+        frame.addKeyListener(keyboardListener);
 
         frame.getContentPane().add(label);
         frame.pack();
@@ -165,15 +139,15 @@ public class SwingDisplay implements DisplayInterface, KeyboardInterface {
 
     @Override
     public boolean isPressed(int key) {
-        System.out.println("KEY ispressed? checked " + key + keypad[key] + ' ' + keyboardChecker.isPressed(keypad[key]));
-        return keyboardChecker.isPressed(keypad[key]);
+        System.out.println("KEY ispressed? checked " + key + keypad[key] + ' ' + keyboardListener.isPressed(keypad[key]));
+        return keyboardListener.isPressed(keypad[key]);
     }
 
     @Override
     public int waitForAnyKey() {
         while (true) {
             for (int i=0; i<=0xF; i++) {
-                if (keyboardChecker.isPressed(keypad[i])) {
+                if (keyboardListener.isPressed(keypad[i])) {
                     return i;
                 }
             }
