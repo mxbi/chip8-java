@@ -6,6 +6,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.HashSet;
 
 import static java.awt.event.KeyEvent.KEY_PRESSED;
@@ -33,6 +34,7 @@ class KeyboardChecker extends KeyAdapter {
 
 public class SwingDisplay implements DisplayInterface, KeyboardInterface {
     private boolean[][] disp = new boolean[64][32];
+    private boolean[][] lastFrame = Arrays.stream(disp).map(boolean[]::clone).toArray(boolean[][]::new);
     public static final char[] keypad = {'x', '1', '2', '3', 'q', 'w', 'e', 'a', 's', 'd', 'z', 'c', '4', 'r', 'f', 'v'};
 
     private JFrame frame;
@@ -111,12 +113,21 @@ public class SwingDisplay implements DisplayInterface, KeyboardInterface {
         for (int y=0; y<32; y++) {
             for (int x=0; x<64; x++) {
                 if (disp[x][y]) {
+                    gfx.setColor(Color.WHITE);
                     gfx.fillRect(x * 10, y * 10, 10, 10);
                 } else {
-                    gfx.clearRect(x * 10, y * 10, 10, 10);
+                    // 1-frame persistence
+                    if (lastFrame[x][y]) {
+                        gfx.setColor(Color.GRAY);
+                        gfx.fillRect(x * 10, y * 10, 10, 10);
+                    } else {
+                        gfx.clearRect(x * 10, y * 10, 10, 10);
+                    }
                 }
             }
         }
+
+        lastFrame = Arrays.stream(disp).map(boolean[]::clone).toArray(boolean[][]::new);
 
         imageIcon.setImage(bi);
         frame.repaint();
