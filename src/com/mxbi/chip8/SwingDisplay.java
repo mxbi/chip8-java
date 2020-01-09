@@ -12,10 +12,13 @@ public class SwingDisplay implements DisplayInterface, KeyboardInterface {
     private JLabel label;
     private ImageIcon imageIcon;
 
-    SlidingBuffer<Long> frameTimer = new SlidingBuffer<>(60);
-    SlidingBuffer<Long> execTimer = new SlidingBuffer<>(512);
+    public static final int frameRate = 60;
+    private static final long minFrameTimeNanos = (long) (1e9 / frameRate); // 60 fps
+    private long nextFrameTime = System.nanoTime();
 
-    public static final long minFrameTimeNanos = (long) 1.667e7; // 60 fps
+    // 1 second average for FPS/clock speed timers
+    private SlidingBuffer<Long> frameTimer = new SlidingBuffer<>(frameRate);
+    private SlidingBuffer<Long> execTimer = new SlidingBuffer<>(CPU.cpu_freq);
 
     private void createGUI() {
         frame = new JFrame("CHIP-8");
@@ -28,14 +31,11 @@ public class SwingDisplay implements DisplayInterface, KeyboardInterface {
         label = new JLabel(imageIcon);
 
         drawNewFrame();
-
-//        label = new JLabel("Hello World");
+        
         frame.getContentPane().add(label);
         frame.pack();
         frame.setVisible(true);
-//
-//        gfx = frame.getGraphics();
-//        gfx.fillRect(10, 10, 100, 100);
+
     }
 
     public SwingDisplay() throws InvocationTargetException, InterruptedException {
@@ -95,21 +95,31 @@ public class SwingDisplay implements DisplayInterface, KeyboardInterface {
 
         if (frameTimer.isFilled() && execTimer.isFilled()) {
 
-            double nanosPerFrame = (double) (frameTimer.getLast() - frameTimer.getNthLast()) / frameTimer.getN();
-            double nanosPerClock = (double) (execTimer.getLast() - execTimer.getNthLast()) / execTimer.getN();
+            double nanosPerFrame = (double) (frameTimer.getLast() - frameTimer.getNthLast()) / (frameTimer.getN() - 1);
+            double nanosPerClock = (double) (execTimer.getLast() - execTimer.getNthLast()) / (execTimer.getN() - 1);
 
             double fps = 1e9 / nanosPerFrame;
             double freq = 1e9 / nanosPerClock;
 
             frame.setTitle(String.format("CHIP-8: %.1f Hz %.1f FPS", freq, fps));
         }
+
+        // Queue the next frame
+        nextFrameTime += minFrameTimeNanos;
     }
 
     @Override
     // Called on every clock cycle
     public void check() {
-        execTimer.push(System.nanoTime());
-        if (System.nanoTime() - frameTimer.getLast() > minFrameTimeNanos) {
+        long nanoTime = System.nanoTime();
+        execTimer.push(nanoTime);
+
+        // We increment it by 16ms instead of just adding 16ms onto the current time
+        // This means that each frame compensates for the delay of the last frame, giving more accurate timing
+//        if (nextFrameTime == null) {
+//            nextFrameTime = nanoTime - 1;
+//        }
+        if (nanoTime > nextFrameTime) {
             drawNewFrame();
         }
     }

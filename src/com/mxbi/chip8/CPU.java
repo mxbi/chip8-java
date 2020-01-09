@@ -4,6 +4,8 @@ import java.util.Arrays;
 
 public class CPU {
 	public static final int cpu_freq = 512;
+	private static final long minClockWaitTime = (long) (1e9 / cpu_freq);
+	private long nextClockTime = System.nanoTime();
 
 	// Initialise memory and registers
 	// We unfortunately have to wasteful and use short instead of byte here to allow for up to 0xFF representation
@@ -74,9 +76,9 @@ public class CPU {
 			execute();
 
 			// Timing: Wait for next clock cycle
-			long t1 = System.nanoTime();
+			t0 = System.nanoTime();
 
-			long waitTime = cycleWaitNanos - (t1 - t0);
+			long waitTime = nextClockTime - t0;//cycleWaitNanos - (t1 - t0);
 
 			// Sleep until we have 500 microseconds left, then switch to busywait for better precision
 			// Windows has crappy timers so we need this hack
@@ -86,11 +88,12 @@ public class CPU {
 			}
 
 			// Busy wait until we reach next clock cycle
-			while ((t1 - t0) < cycleWaitNanos) {
-				t1 = System.nanoTime();
+			while (t0 < nextClockTime) {
+				t0 = System.nanoTime();
 			}
 
-			t0 = System.nanoTime();
+//			t0 = System.nanoTime();
+			nextClockTime += minClockWaitTime;
 		}
 	}
 
