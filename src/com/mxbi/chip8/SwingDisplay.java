@@ -6,12 +6,16 @@ import java.awt.image.BufferedImage;
 import java.lang.reflect.InvocationTargetException;
 
 public class SwingDisplay implements DisplayInterface, KeyboardInterface {
-    boolean[][] disp = new boolean[64][32];
-    JFrame frame;
-    JLabel label;
-    Graphics gfx;
+    private boolean[][] disp = new boolean[64][32];
 
-    ImageIcon imageIcon;
+    private JFrame frame;
+    private JLabel label;
+    private ImageIcon imageIcon;
+
+    SlidingBuffer<Long> frameTimer = new SlidingBuffer<>(60);
+    SlidingBuffer<Long> execTimer = new SlidingBuffer<>(512);
+
+    public static final long minFrameTimeNanos = (long) 1.667e7; // 60 fps
 
     private void createGUI() {
         frame = new JFrame("CHIP-8");
@@ -23,7 +27,7 @@ public class SwingDisplay implements DisplayInterface, KeyboardInterface {
         imageIcon = new ImageIcon();
         label = new JLabel(imageIcon);
 
-        output();
+        drawNewFrame();
 
 //        label = new JLabel("Hello World");
         frame.getContentPane().add(label);
@@ -67,7 +71,8 @@ public class SwingDisplay implements DisplayInterface, KeyboardInterface {
         return flipped;
     }
 
-    private void output() {
+    private void drawNewFrame() {
+        // Update the frame itself
         BufferedImage bi = new BufferedImage(640, 320, BufferedImage.TYPE_BYTE_GRAY);
         Graphics2D gfx = bi.createGraphics();
         gfx.setColor(Color.WHITE);
@@ -85,13 +90,28 @@ public class SwingDisplay implements DisplayInterface, KeyboardInterface {
         imageIcon.setImage(bi);
         frame.repaint();
 
+        // Update the FPS/Clock counters
+        frameTimer.push(System.nanoTime());
+
+        if (frameTimer.isFilled() && execTimer.isFilled()) {
+
+            double nanosPerFrame = (double) (frameTimer.getLast() - frameTimer.getNthLast()) / frameTimer.getN();
+            double nanosPerClock = (double) (execTimer.getLast() - execTimer.getNthLast()) / execTimer.getN();
+
+            double fps = 1e9 / nanosPerFrame;
+            double freq = 1e9 / nanosPerClock;
+
+            frame.setTitle(String.format("CHIP-8: %.1f Hz %.1f FPS", freq, fps));
+        }
     }
 
     @Override
     // Called on every clock cycle
     public void check() {
-        // Draw on every cycle for now
-        output();
+        execTimer.push(System.nanoTime());
+        if (System.nanoTime() - frameTimer.getLast() > minFrameTimeNanos) {
+            drawNewFrame();
+        }
     }
 
     @Override

@@ -90,7 +90,6 @@ public class CPU {
 				t1 = System.nanoTime();
 			}
 
-//			System.out.println(t1 - t0);
 			t0 = System.nanoTime();
 		}
 	}
@@ -124,7 +123,7 @@ public class CPU {
 	void execute() throws UnsupportedOperationException {
 		// Fetch instruction (2 bytes) from ram
 		int instr = (((int) ram[PC]) << 8) + ((int) ram[PC + 1]);
-		System.out.println(instrToString(instr));
+//		System.out.println(instrToString(instr));
 
 		int oldPC = PC;
 
