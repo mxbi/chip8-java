@@ -1,8 +1,11 @@
 package com.mxbi.chip8;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 
@@ -24,6 +27,13 @@ public class SwingDisplay implements DisplayInterface, KeyboardInterface {
     // 1 second average for FPS/clock speed timers
     private SlidingBuffer<Long> frameTimer = new SlidingBuffer<>(frameRate);
     private SlidingBuffer<Long> execTimer = new SlidingBuffer<>(CPU.cpu_freq);
+
+    public static final Color BACKGROUND = new Color(0x525252); //new Color(0x333745);// new Color(0x202830);
+    public static final Color FOREGROUND = new Color(0xFE5F55); //new Color(0x44BBA4);//new Color(0xF2AA4C);
+    public static final Color PERSISTENCE = new Color(0xD35C54);
+
+    private int frame_i = 0;
+
 
     private void createGUI() {
         frame = new JFrame("CHIP-8");
@@ -80,28 +90,38 @@ public class SwingDisplay implements DisplayInterface, KeyboardInterface {
 
     private void drawNewFrame() {
         // Update the frame itself
-        BufferedImage bi = new BufferedImage(640, 320, BufferedImage.TYPE_BYTE_GRAY);
+        BufferedImage bi = new BufferedImage(640, 320, BufferedImage.TYPE_INT_RGB);
         Graphics2D gfx = bi.createGraphics();
-        gfx.setColor(Color.WHITE);
+
+        gfx.setColor(BACKGROUND);
+        gfx.fillRect(0, 0, bi.getWidth(), bi.getHeight());
 
         for (int y=0; y<32; y++) {
             for (int x=0; x<64; x++) {
                 if (disp[x][y]) {
-                    gfx.setColor(Color.WHITE);
+                    gfx.setColor(FOREGROUND);
                     gfx.fillRect(x * 10, y * 10, 10, 10);
                 } else {
                     // 1-frame persistence
                     if (lastFrame[x][y]) {
-                        gfx.setColor(Color.GRAY);
+                        gfx.setColor(PERSISTENCE);
                         gfx.fillRect(x * 10, y * 10, 10, 10);
                     } else {
-                        gfx.clearRect(x * 10, y * 10, 10, 10);
+                        // We don't actually need to do anything
+//                        gfx.clearRect(x * 10, y * 10, 10, 10);
                     }
                 }
             }
         }
 
         lastFrame = Arrays.stream(disp).map(boolean[]::clone).toArray(boolean[][]::new);
+//
+//        try {
+//            ImageIO.write(bi, "png", new File(String.format("frames/frame%05d.png", frame_i)));
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        frame_i += 1;
 
         imageIcon.setImage(bi);
         frame.repaint();
