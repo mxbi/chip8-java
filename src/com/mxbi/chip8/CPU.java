@@ -73,7 +73,11 @@ public class CPU {
 			sound.check();
 			display.check();
 
-			execute();
+			boolean ret = execute();
+			if (ret) { // Execution finished
+				display.executionFinished();
+				return;
+			}
 
 			// Timing: Wait for next clock cycle
 			t0 = System.nanoTime();
@@ -122,7 +126,8 @@ public class CPU {
 		PC += 0x2;
 	}
 
-	void execute() throws UnsupportedOperationException {
+	// Returns true if execution has finished
+	boolean execute() throws UnsupportedOperationException {
 		// Fetch instruction (2 bytes) from ram
 		int instr = (((int) ram[PC]) << 8) + ((int) ram[PC + 1]);
 //		System.out.println(instrToString(instr));
@@ -184,8 +189,10 @@ public class CPU {
 		}
 
 		if (oldPC == PC) {
-			System.out.println("Issue with " + instrToString(instr) + ": PC stuck");
+			System.out.println("Issue with " + instrToString(instr) + ": PC stuck - exiting.");
+			return true;
 		}
+		return false;
 	}
 
 	// INSTRUCTIONS

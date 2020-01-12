@@ -7,4 +7,6 @@ public interface DisplayInterface {
     boolean draw(short[] data, int x, int y);
 
     void check();
+
+    default void executionFinished() {};
 }

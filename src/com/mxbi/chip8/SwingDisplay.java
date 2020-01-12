@@ -155,4 +155,17 @@ public class SwingDisplay implements DisplayInterface, KeyboardInterface {
             frame.setTitle("CHIP-8: Waiting for key!");
         }
     }
+
+    @Override
+    public void executionFinished() {
+        frame.setTitle("CHIP-8: Execution finished! Exiting in 5s...");
+         new Thread(() -> {
+             try {
+                 Thread.sleep(5000);
+             } catch (InterruptedException e) {
+                 e.printStackTrace();
+             }
+             System.exit(0);
+         }).start();
+    }
 }
